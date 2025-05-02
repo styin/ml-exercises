@@ -41,11 +41,39 @@ def conv(in_channels, out_channels, kernel_size, stride=2, padding=1, batch_norm
 
 
 class DCGenerator(nn.Module):
-    def __init__(self):
+    def __init__(self, noise_size, conv_dim):
         super(DCGenerator, self).__init__()
 
         ###########################################
         ##   FILL THIS IN: CREATE ARCHITECTURE   ##
+        # Adapted from pytorch tutorial on DCGAN:
+        # https://pytorch.org/tutorials/beginner/dcgan_faces_tutorial.html
+        # - especially the kernel sizes and strides
+        
+        # Changes:
+        # 1. changed input size to fit the architecture of the assignment
+        
+        # Notes regarding DCGAN:
+        # - convolution bias is replaced by BatchNorm's learned shift (beta)
+        self.deconv1 = nn.Sequential(
+            # deconv1 from 100x1x1 to 128x4x4
+            nn.ConvTranspose2d(in_channels=noise_size, out_channels=conv_dim*4, kernel_size=4, stride=1, padding=0, bias=False),
+            nn.BatchNorm2d(num_features=conv_dim*4),
+        )
+        # deconv2 from 128x4x4 to 64x8x8
+        self.deconv2 = nn.Sequential(
+            nn.ConvTranspose2d(in_channels=conv_dim*4, out_channels=conv_dim*2, kernel_size=4, stride=2, padding=1, bias=False),
+            nn.BatchNorm2d(num_features=conv_dim*2),
+        )
+        # deconv3 from 64x8x8 to 32x16x16
+        self.deconv3 = nn.Sequential(
+            nn.ConvTranspose2d(in_channels=conv_dim*2, out_channels=conv_dim, kernel_size=4, stride=2, padding=1, bias=False),
+            nn.BatchNorm2d(num_features=conv_dim),
+        )
+        # deconv4 from 32x16x16 to 3x32x32
+        self.deconv4 = nn.ConvTranspose2d(in_channels=conv_dim, out_channels=3, kernel_size=4, stride=2, padding=1, bias=False)
+        # - no batch norm, as per the paper and the assignment
+        
         ###########################################
 
 
@@ -123,12 +151,41 @@ class DCDiscriminator(nn.Module):
     """Defines the architecture of the discriminator network.
        Note: Both discriminators D_X and D_Y have the same architecture in this assignment.
     """
-    def __init__(self):
+    def __init__(self, conv_dim):
         super(DCDiscriminator, self).__init__()
-
-        ###########################################
-        ##   FILL THIS IN: CREATE ARCHITECTURE   ##
-        ###########################################
+        # Adapted from pytorch tutorial on DCGAN:
+        # https://pytorch.org/tutorials/beginner/dcgan_faces_tutorial.html
+        # - especially the kernel sizes and strides
+        
+        # Changes:
+        # 1. added BatchNorm to conv1 as depicted in the architectural diagram of the assignment
+        # - (contrary to the paper): 
+        #   "Directly applying batchnorm to all layers
+        #   however, resulted in sample oscillation and model instability. This was avoided by not applying
+        #   batchnorm to the generator output layer and the discriminator input layer."
+        # 2. changed LeakyReLU to ReLU as per the assignment
+        # 3. changed input size to fit the architecture of the assignment
+        
+        # Notes regarding DCGAN:
+        # - convolution bias is replaced by BatchNorm's learned shift (beta)
+        # conv1 from 3x32x32 to 32x16x16
+        self.conv1 = nn.Sequential(
+            nn.Conv2d(in_channels=3, out_channels=conv_dim, kernel_size=4, stride=2, padding=1, bias=False),
+            nn.BatchNorm2d(conv_dim)
+        )
+        # conv2 from 32x16x16 to 64x8x8
+        self.conv2 = nn.Sequential(
+            nn.Conv2d(in_channels=conv_dim, out_channels=conv_dim*2, kernel_size=4, stride=2, padding=1, bias=False),
+            nn.BatchNorm2d(conv_dim*2)
+        )
+        # conv3 from 64x8x8 to 128x4x4
+        self.conv3 = nn.Sequential(
+            nn.Conv2d(in_channels=conv_dim*2, out_channels=conv_dim*4, kernel_size=4, stride=2, padding=1, bias=False),
+            nn.BatchNorm2d(conv_dim*4),
+        )
+        # conv4 from 128x4x4 to 1x1x1
+        self.conv4 = nn.Conv2d(in_channels=conv_dim*4, out_channels=1, kernel_size=4, stride=1, padding=0, bias=False)
+        # no batch norm, as per the paper and the assignment
 
     def forward(self, x):
 

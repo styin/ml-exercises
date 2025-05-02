@@ -62,21 +62,23 @@ def train(train_loader, opt, device):
             # FILL THIS IN
             # 1. Compute the discriminator loss on real images
             # D_real_loss = ...
-            
+            D_real_loss = 0.5 * mse_loss(D(real_images), torch.ones_like(D(real_images)))
 
             # 2. Sample noise
             # noise = ...
-            
+            noise = sample_noise(opts.batch_size, opts.noise_size).to(device)
 
             # 3. Generate fake images from the noise
             # fake_images = ...
+            fake_images = G(noise)
 
             # 4. Compute the discriminator loss on the fake images
             # D_fake_loss = ...
-            
+            D_fake_loss = 0.5 * mse_loss(D(fake_images.detach()), torch.zeros_like(D(fake_images.detach())))
 
             # 5. Compute the total discriminator loss
             # D_total_loss = ...
+            D_total_loss = D_real_loss + D_fake_loss
     
             D_total_loss.backward()
             d_optimizer.step()
@@ -90,13 +92,16 @@ def train(train_loader, opt, device):
             # FILL THIS IN
             # 1. Sample noise
             # noise = ...
+            noise = sample_noise(opts.batch_size, opts.noise_size).to(device)
             
 
             # 2. Generate fake images from the noise
             # fake_images = ...
+            fake_images = G(noise)
             
             # 3. Compute the generator loss
             # G_loss = ...
+            G_loss = mse_loss(D(fake_images.detach()), torch.ones_like(D(fake_images.detach())))
 
             G_loss.backward()
             g_optimizer.step()
