@@ -1,0 +1,30 @@
+# Conda environment for Gymnasium + MuJoCo (CPU-only, no CUDA)
+# Create: conda env create -f environment-cpu.yml
+# Activate: conda activate gym-mujoco-cpu
+
+name: gym-mujoco-cpu
+channels:
+  - pytorch
+  - conda-forge
+  - defaults
+dependencies:
+  - python=3.11
+  - pip
+  - numpy
+  - matplotlib
+  - jupyter
+  - ipykernel
+  - tqdm
+  # PyTorch CPU from conda (more reliable on Windows than pip)
+  - pytorch
+  - cpuonly
+  - pip:
+    - gymnasium[mujoco]>=1.0.0
+    - mujoco>=3.0.0
+    - stable-baselines3>=2.0.0
+    - tensorboard
+    - imageio
+    - imageio-ffmpeg
+variables:
+  # Fix OpenMP conflict between conda's MKL and PyTorch on Windows
+  KMP_DUPLICATE_LIB_OK: "TRUE"

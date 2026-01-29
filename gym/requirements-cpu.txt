@@ -1,0 +1,24 @@
+# Requirements for Gymnasium + MuJoCo (CPU-only)
+# 
+# RECOMMENDED: Use environment-cpu.yml instead for Windows!
+# The conda environment file uses pytorch from conda which is more
+# reliable on Windows than pip-installed pytorch.
+#
+# If you must use pip, install PyTorch FIRST from conda:
+#   conda install pytorch cpuonly -c pytorch
+# Then install these requirements:
+#   pip install -r requirements-cpu.txt
+
+# Core RL packages
+gymnasium[mujoco]>=1.0.0
+mujoco>=3.0.0
+
+# RL training framework (requires PyTorch - install separately via conda)
+stable-baselines3>=2.0.0
+
+# Logging and visualization
+tensorboard
+
+# Video recording
+imageio
+imageio-ffmpeg

@@ -1,0 +1,77 @@
+<mujoco model="point_mass">
+  <!-- 
+    MuJoCo (Multi-Joint dynamics with Contact) Model Definition.
+    
+    Key Concepts:
+    - worldbody: The root of the kinematic tree.
+    - body: A physical object (can have mass, geometry, etc.).
+    - joint: Allows motion between a body and its parent.
+    - geom: The visual and collision shape of a body.
+    - actuator: Defines how we control the joints (motors).
+  -->
+
+  <!-- Compiler/Option: Simulation settings -->
+  <!-- inertiafromgeom="true": Compute mass/inertia automatically from geom density/size -->
+  <compiler angle="radian" coordinate="local" inertiafromgeom="true"/>
+  
+  <!-- timestep="0.01": The physics integration step size (10ms). -->
+  <!-- integrator="RK4": Runge-Kutta 4th order (more accurate than Euler). -->
+  <option timestep="0.01" gravity="0 0 -9.81" density="1.2" viscosity="0.00002" integrator="RK4"/>
+
+  <!-- Default settings for classes of elements -->
+  <default>
+    <!-- joint: limited="true" means joints have limits by default -->
+    <joint armature="1" damping="1" limited="true"/>
+    <!-- geom: conaffinity="1" means these geoms can collide -->
+    <geom conaffinity="1" condim="3" density="5.0" friction="1 0.5 0.5" margin="0.01" rgba="0.8 0.6 0.4 1"/>
+  </default>
+
+  <!-- Assets: Textures and materials used for rendering -->
+  <asset>
+    <texture builtin="gradient" height="100" rgb1="1 1 1" rgb2="0 0 0" type="skybox" width="100"/>
+    <texture builtin="flat" height="1278" mark="cross" markrgb="1 1 1" name="texgeom" random="0.01" rgb1="0.8 0.6 0.4" rgb2="0.8 0.6 0.4" type="cube" width="127"/>
+    <texture builtin="checker" height="100" name="texplane" rgb1="0 0 0" rgb2="0.8 0.8 0.8" type="2d" width="100"/>
+    <material name="MatPlane" reflectance="0.5" shininess="1" specular="1" texrepeat="60 60" texture="texplane"/>
+    <material name="geom" texture="texgeom" texuniform="true"/>
+  </asset>
+
+  <!-- Worldbody: The physical objects in the world -->
+  <worldbody>
+    <!-- Light source -->
+    <light cutoff="100" diffuse="1 1 1" dir="-0 0 -1.3" directional="true" exponent="1" pos="0 0 1.3" specular=".1 .1 .1"/>
+    
+    <!-- Floor: A large plane -->
+    <geom conaffinity="1" condim="3" material="MatPlane" name="floor" pos="0 0 0" rgba="0.8 0.9 0.8 1" size="40 40 40" type="plane"/>
+
+    <!-- THE AGENT -->
+    <!-- It has 2 slide joints, meaning it can slide in X and Y -->
+    <body name="torso" pos="0 0 0.1">
+      <!-- Camera that tracks this body -->
+      <camera name="track" mode="trackcom" pos="0 -3 3" xyaxes="1 0 0 0 1 1"/>
+      
+      <!-- slide joints: Allow translation along an axis -->
+      <!-- range="-10 10": Limit movement to this range -->
+      <joint name="root_x" type="slide" pos="0 0 0" axis="1 0 0" range="-10 10"/>
+      <joint name="root_y" type="slide" pos="0 0 0" axis="0 1 0" range="-10 10"/>
+      
+      <!-- The visual representation of the agent -->
+      <geom name="torso_geom" pos="0 0 0" size="0.1" type="sphere"/>
+    </body>
+
+    <!-- THE TARGET -->
+    <!-- A static body (no joints), so it doesn't move by physics, only by manual reset -->
+    <!-- conaffinity="0": No collision (ghost object) -->
+    <body name="target" pos="1 1 0.1">
+      <geom name="target_geom" pos="0 0 0" size="0.1" type="sphere" rgba="1 0 0 1" conaffinity="0" contype="0"/>
+    </body>
+  </worldbody>
+
+  <!-- Actuators: How we control the agent -->
+  <actuator>
+    <!-- Motors apply force directly to joints -->
+    <!-- gear="1": Force multiplier -->
+    <!-- ctrlrange="-1 1": Inputs are clamped to this range -->
+    <motor ctrllimited="true" ctrlrange="-1 1" gear="1" joint="root_x"/>
+    <motor ctrllimited="true" ctrlrange="-1 1" gear="1" joint="root_y"/>
+  </actuator>
+</mujoco>
