@@ -10,19 +10,43 @@
     - actuator: Defines how we control the joints (motors).
   -->
 
-  <!-- Compiler/Option: Simulation settings -->
-  <!-- inertiafromgeom="true": Compute mass/inertia automatically from geom density/size -->
+  <!-- 
+    Compiler Options:
+    - angle="radian": Interpretation of angle values (radian vs degree).
+    - coordinate="local": Coordinate frame for defining bodies/geoms (local vs global).
+    - inertiafromgeom="true": Automatically infer mass and inertia from geometry density and volume.
+  -->
   <compiler angle="radian" coordinate="local" inertiafromgeom="true"/>
   
-  <!-- timestep="0.01": The physics integration step size (10ms). -->
-  <!-- integrator="RK4": Runge-Kutta 4th order (more accurate than Euler). -->
+  <!-- 
+    Simulation Options:
+    - timestep="0.01": Physics integration step size in seconds (10ms).
+    - gravity="0 0 -9.81": Gravity vector (x, y, z) in m/s^2.
+    - density="1.2": fluid density (e.g. air) for computing drag/lift forces.
+    - viscosity="0.00002": fluid viscosity for computing drag/lift forces.
+    - integrator="RK4": Numerical integrator (Runge-Kutta 4th order) for higher accuracy.
+  -->
   <option timestep="0.01" gravity="0 0 -9.81" density="1.2" viscosity="0.00002" integrator="RK4"/>
 
-  <!-- Default settings for classes of elements -->
+  <!-- Default settings for all classes of elements -->
   <default>
-    <!-- joint: limited="true" means joints have limits by default -->
+    <!-- 
+      Joint Defaults:
+      - armature="1": Adds simulated mass to the motor/joint itself, smoothing interactions.
+      - damping="1": Adds friction proportional to velocity (viscous damping).
+      - limited="true": Joints have min/max limits by default.
+    -->
     <joint armature="1" damping="1" limited="true"/>
-    <!-- geom: conaffinity="1" means these geoms can collide -->
+    
+    <!-- 
+      Geom Defaults:
+      - conaffinity="1": Bitmask determining collision groups this geom CAN collide WITH.
+      - condim="3": Contact dimensionality (3 = normal force + tangential friction).
+      - density="5.0": Material density (kg/m^3) for mass calculation.
+      - friction="1 0.5 0.5": Fractions for [sliding, torsional, rolling] friction.
+      - margin="0.01": Distance buffer for collision detection.
+      - rgba="0.8 0.6 0.4 1": Default color (Red, Green, Blue, Alpha).
+    -->
     <geom conaffinity="1" condim="3" density="5.0" friction="1 0.5 0.5" margin="0.01" rgba="0.8 0.6 0.4 1"/>
   </default>
 
@@ -31,46 +55,74 @@
     <texture builtin="gradient" height="100" rgb1="1 1 1" rgb2="0 0 0" type="skybox" width="100"/>
     <texture builtin="flat" height="1278" mark="cross" markrgb="1 1 1" name="texgeom" random="0.01" rgb1="0.8 0.6 0.4" rgb2="0.8 0.6 0.4" type="cube" width="127"/>
     <texture builtin="checker" height="100" name="texplane" rgb1="0 0 0" rgb2="0.8 0.8 0.8" type="2d" width="100"/>
+    
+    <!--
+      Materials:
+      - reflectance="0.5": Specular reflection fraction (0-1).
+      - shininess="1": Specular highlight size/sharpness.
+      - specular="1": Specular highlight intensity.
+      - texrepeat="60 60": Number of times to tile the texture over the surface.
+      - texuniform="true": Ensures texture mapping is uniform across different shapes.
+    -->
     <material name="MatPlane" reflectance="0.5" shininess="1" specular="1" texrepeat="60 60" texture="texplane"/>
     <material name="geom" texture="texgeom" texuniform="true"/>
   </asset>
 
-  <!-- Worldbody: The physical objects in the world -->
+  <!-- Worldbody: The physical simulation space -->
   <worldbody>
-    <!-- Light source -->
+    <!-- 
+      Light:
+      - cutoff="100": Spotlight cutoff angle.
+      - diffuse/specular: Color components of the light.
+      - dir/pos: Direction and Position.
+      - directional="true": Infinite directional light (like the sun) vs point light.
+    -->
     <light cutoff="100" diffuse="1 1 1" dir="-0 0 -1.3" directional="true" exponent="1" pos="0 0 1.3" specular=".1 .1 .1"/>
     
     <!-- Floor: A large plane -->
     <geom conaffinity="1" condim="3" material="MatPlane" name="floor" pos="0 0 0" rgba="0.8 0.9 0.8 1" size="40 40 40" type="plane"/>
 
     <!-- THE AGENT -->
-    <!-- It has 2 slide joints, meaning it can slide in X and Y -->
     <body name="torso" pos="0 0 0.1">
-      <!-- Camera that tracks this body -->
+      <!-- 
+        Camera:
+        - mode="trackcom": Automatically track the Center of Mass of this body.
+        - xyaxes: Manually defines the camera's X and Y orientation axes.
+      -->
       <camera name="track" mode="trackcom" pos="0 -3 3" xyaxes="1 0 0 0 1 1"/>
       
-      <!-- slide joints: Allow translation along an axis -->
-      <!-- range="-10 10": Limit movement to this range -->
+      <!-- 
+        Joints (Degrees of Freedom):
+        - type="slide": Allows linear movement along the specified axis.
+        - axis="1 0 0": The vector direction of movement (X-axis).
+        - range="-10 10": Hard limits for the joint (min max).
+      -->
       <joint name="root_x" type="slide" pos="0 0 0" axis="1 0 0" range="-10 10"/>
       <joint name="root_y" type="slide" pos="0 0 0" axis="0 1 0" range="-10 10"/>
       
-      <!-- The visual representation of the agent -->
       <geom name="torso_geom" pos="0 0 0" size="0.1" type="sphere"/>
     </body>
 
     <!-- THE TARGET -->
-    <!-- A static body (no joints), so it doesn't move by physics, only by manual reset -->
-    <!-- conaffinity="0": No collision (ghost object) -->
+    <!-- 
+      Target Body:
+      - conaffinity="0": Cannot be collided with by others.
+      - contype="0": Does not collide with others.
+      Setting both to 0 creates a non-colliding "ghost" object (visual only).
+    -->
     <body name="target" pos="1 1 0.1">
       <geom name="target_geom" pos="0 0 0" size="0.1" type="sphere" rgba="1 0 0 1" conaffinity="0" contype="0"/>
     </body>
   </worldbody>
 
-  <!-- Actuators: How we control the agent -->
+  <!-- Actuators: Controls -->
   <actuator>
-    <!-- Motors apply force directly to joints -->
-    <!-- gear="1": Force multiplier -->
-    <!-- ctrlrange="-1 1": Inputs are clamped to this range -->
+    <!-- 
+      Motor:
+      - ctrllimited="true": Clamps the control input to the specified range.
+      - ctrlrange="-1 1": The valid input range for the actuator.
+      - gear="1": Scaling factor (gain) for force/torque application.
+    -->
     <motor ctrllimited="true" ctrlrange="-1 1" gear="1" joint="root_x"/>
     <motor ctrllimited="true" ctrlrange="-1 1" gear="1" joint="root_y"/>
   </actuator>
