@@ -1,4 +1,5 @@
 import os
+import imageio
 import torch
 import scipy
 import scipy.misc
@@ -67,11 +68,17 @@ def save_samples(iteration, fixed_Y, fixed_X, G_YtoX, G_XtoY, opts):
 
     merged = merge_images(X, fake_Y, opts)
     path = os.path.join(opts.sample_dir, 'sample-{:06d}-X-Y.png'.format(iteration))
-    scipy.misc.imsave(path, merged)
+    # deprecated scipy.misc.imsave(path, grid)
+    merged = (merged + 1) / 2.0
+    merged = (merged * 255).clip(0, 255).astype(np.uint8)
+    imageio.imwrite(path, merged)
     print('Saved {}'.format(path))
 
     merged = merge_images(Y, fake_X, opts)
     path = os.path.join(opts.sample_dir, 'sample-{:06d}-Y-X.png'.format(iteration))
-    scipy.misc.imsave(path, merged)
+    # deprecated scipy.misc.imsave(path, grid)
+    merged = (merged + 1) / 2.0
+    merged = (merged * 255).clip(0, 255).astype(np.uint8)
+    imageio.imwrite(path, merged)
     print('Saved {}'.format(path))
 

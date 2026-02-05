@@ -23,6 +23,8 @@ from data_loader import get_emoji_loader
 from models import CycleGenerator, DCDiscriminator
 from vanilla_utils import create_dir, create_model, checkpoint, sample_noise, save_samples
 
+from torch.utils.tensorboard import SummaryWriter
+
 SEED = 11
 
 # Set the random seed manually for reproducibility.
@@ -30,6 +32,8 @@ np.random.seed(SEED)
 torch.manual_seed(SEED)
 
 def train(train_loader, opt, device):
+
+    writer = SummaryWriter(log_dir=os.path.join(opts.sample_dir, 'runs'))
     
     G, D = create_model(opts)
     
@@ -101,10 +105,14 @@ def train(train_loader, opt, device):
             
             # 3. Compute the generator loss
             # G_loss = ...
-            G_loss = mse_loss(D(fake_images.detach()), torch.ones_like(D(fake_images.detach())))
+            G_loss = mse_loss(D(fake_images), torch.ones_like(D(fake_images)))
 
             G_loss.backward()
             g_optimizer.step()
+
+            writer.add_scalar('D_real_loss', D_real_loss.item(), iteration)
+            writer.add_scalar('D_fake_loss', D_fake_loss.item(), iteration)
+            writer.add_scalar('G_loss', G_loss.item(), iteration)
 
 
             # Print the log info
@@ -135,10 +143,11 @@ def main(opts):
     create_dir(opts.checkpoint_dir)
     create_dir(opts.sample_dir)
     
+    # ???
     if torch.cuda.is_available():
-        device = torch.device('cpu')
-    else:
         device = torch.device('cuda')
+    else:
+        device = torch.device('cpu')
 
     train(train_loader, opts, device)
 

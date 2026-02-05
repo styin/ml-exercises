@@ -2,6 +2,7 @@ import os
 import torch
 import scipy
 import scipy.misc
+import imageio
 import numpy as np
 from models import DCGenerator, DCDiscriminator
 
@@ -38,7 +39,7 @@ def create_image_grid(array, ncols=None):
 
     if not ncols:
         ncols = int(np.sqrt(num_images))
-    nrows = int(np.math.floor(num_images / float(ncols)))
+    nrows = int(np.floor(num_images / float(ncols)))
     result = np.zeros((cell_h*nrows, cell_w*ncols, channels), dtype=array.dtype)
     for i in range(0, nrows):
         for j in range(0, ncols):
@@ -56,7 +57,11 @@ def save_samples(G, fixed_noise, iteration, opts):
 
     # merged = merge_images(X, fake_Y, opts)
     path = os.path.join(opts.sample_dir, 'sample-{:06d}.png'.format(iteration))
-    scipy.misc.imsave(path, grid)
+    
+    # deprecated scipy.misc.imsave(path, grid)
+    grid = (grid + 1) / 2.0
+    grid = (grid * 255).clip(0, 255).astype(np.uint8)
+    imageio.imwrite(path, grid)
     print('Saved {}'.format(path))
     
 
